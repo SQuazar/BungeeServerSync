@@ -1,0 +1,6 @@
+name: BungeeServerSync
+version: '${project.version}'
+main: net.quazar.mg.BungeeServerSync
+description: BungeeCord server sync
+depends:
+  - RedisBungee
