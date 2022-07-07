@@ -5,7 +5,9 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.quazar.mg.database.Database;
 import net.quazar.mg.database.Sql;
-import net.quazar.mg.repository.ServerInfoRepository;
+import net.quazar.mg.model.GameServer;
+import net.quazar.mg.model.ServerType;
+import net.quazar.mg.repository.GameServerRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;
@@ -14,16 +16,13 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Репозиторий, через который идёт управление объектами базы данных
  */
 @AllArgsConstructor
-public class ServerInfoRepositoryImpl implements ServerInfoRepository {
+public final class GameServerRepositoryImpl implements GameServerRepository {
 
     private final Database database;
 
@@ -33,12 +32,12 @@ public class ServerInfoRepositoryImpl implements ServerInfoRepository {
      * @return экземпляр информации о сервере
      */
     @Override
-    public Optional<ServerInfo> findByKey(@NotNull String key) {
+    public Optional<GameServer> findByKey(@NotNull String key) {
         try (Connection connection = database.getConnection();
              PreparedStatement ps = connection.prepareStatement(Sql.SELECT_BY_NAME.getQuery())) {
             ps.setString(1, key);
             ResultSet rs = ps.executeQuery();
-            if (!rs.next())
+            if (rs.next())
                 return Optional.of(fromResultSet(rs));
             return Optional.empty();
         } catch (SQLException e) {
@@ -52,10 +51,10 @@ public class ServerInfoRepositoryImpl implements ServerInfoRepository {
      * @return список экземпляров информации о серверах
      */
     @Override
-    public List<ServerInfo> findAll() {
+    public List<GameServer> findAll() {
         try (Connection connection = database.getConnection();
              PreparedStatement ps = connection.prepareStatement(Sql.SELECT_ALL.getQuery())) {
-            List<ServerInfo> serverInfos = new ArrayList<>();
+            List<GameServer> serverInfos = new ArrayList<>();
             ResultSet rs = ps.executeQuery();
             while (rs.next())
                 serverInfos.add(fromResultSet(rs));
@@ -72,14 +71,19 @@ public class ServerInfoRepositoryImpl implements ServerInfoRepository {
      * @return экземпляр информации сервера
      */
     @Override
-    public @NotNull ServerInfo save(@NotNull ServerInfo value) {
+    public @NotNull GameServer save(@NotNull GameServer value) {
         try (Connection connection = database.getConnection();
              PreparedStatement ps = connection.prepareStatement(Sql.INSERT.getQuery())) {
             ps.setString(1, value.getName());
-            InetSocketAddress address = (InetSocketAddress) value.getSocketAddress();
-            ps.setString(2, address.getHostName() + ":" + address.getPort());
+            String address = value.getAddress();
+            ps.setString(2, address);
             ps.setString(3, value.getMotd());
             ps.setBoolean(4, value.isRestricted());
+            ps.setString(5, value.getServerType().name().toLowerCase());
+            ps.setString(6, address);
+            ps.setString(7, value.getMotd());
+            ps.setBoolean(8, value.isRestricted());
+            ps.setString(9, value.getServerType().name().toLowerCase());
             ps.executeUpdate();
             return value;
         } catch (SQLException e) {
@@ -92,7 +96,7 @@ public class ServerInfoRepositoryImpl implements ServerInfoRepository {
      * @param value экземпляр информации сервера
      */
     @Override
-    public void delete(@NotNull ServerInfo value) {
+    public void delete(@NotNull GameServer value) {
         try (Connection connection = database.getConnection();
         PreparedStatement ps = connection.prepareStatement(Sql.DELETE.getQuery())) {
             ps.setString(1, value.getName());
@@ -123,12 +127,14 @@ public class ServerInfoRepositoryImpl implements ServerInfoRepository {
      * @return экземпляр информации сервера из ResultSet
      * @throws SQLException в случае, если ResultSet будет содержать неверные данные
      */
-    private ServerInfo fromResultSet(ResultSet rs) throws SQLException {
+    private GameServer fromResultSet(ResultSet rs) throws SQLException {
         String name = rs.getString(1);
-        String[] addr = rs.getString(2).split(" ");
+        String[] addr = rs.getString(2).split(":");
         SocketAddress address = InetSocketAddress.createUnresolved(addr[0], Integer.parseInt(addr[1]));
         String motd = rs.getString(3);
         boolean restricted = rs.getBoolean(4);
-        return ProxyServer.getInstance().constructServerInfo(name, address, motd, restricted);
+        ServerType serverType = ServerType.valueOf(rs.getString(5).toUpperCase());
+        ServerInfo serverInfo = ProxyServer.getInstance().constructServerInfo(name, address, motd, restricted);
+        return new GameServer(name, addr[0] + ":" + addr[1], motd, restricted, serverType, serverInfo);
     }
 }
