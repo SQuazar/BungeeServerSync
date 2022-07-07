@@ -188,6 +188,8 @@ public final class ServerSyncCommand {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            if (sender instanceof RedisBungeeCommandSender)
+                sender = ProxyServer.getInstance().getConsole();
             if (args.length > 0) {
                 if ("all".equalsIgnoreCase(args[0])) {
                     redisBungeeAPI.getAllServers().forEach(proxy ->
