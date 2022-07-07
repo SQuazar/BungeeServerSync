@@ -78,7 +78,7 @@ public final class ServerSyncCommand {
                     s.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
                             String.format("&aServers &e[%s] &ais synchronized",
                                     String.join(", ", synchronizedServers)))));
-                else sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
+                else s.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
                         "&aAll servers are already synchronized!")));
             });
         }
