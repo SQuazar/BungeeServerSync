@@ -1,4 +1,4 @@
-package net.quazar.mg.command;
+package net.quazar.bsync.command;
 
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeAPI;
 import com.imaginarycode.minecraft.redisbungee.RedisBungeeCommandSender;
@@ -8,11 +8,11 @@ import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.plugin.Command;
-import net.quazar.mg.BungeeServerSync;
-import net.quazar.mg.exception.GameServerNotFoundException;
-import net.quazar.mg.model.GameServer;
-import net.quazar.mg.model.ServerType;
-import net.quazar.mg.service.ServerInfoService;
+import net.quazar.bsync.BungeeServerSync;
+import net.quazar.bsync.exception.GameServerNotFoundException;
+import net.quazar.bsync.model.GameServer;
+import net.quazar.bsync.model.ServerType;
+import net.quazar.bsync.service.ServerInfoService;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -49,8 +49,8 @@ public final class ServerSyncCommand {
                         redisBungeeAPI.sendProxyCommand(serverId, getName());
                         return;
                     }
-                    sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&cServer with id %s not found in redis.", serverId))));
+                    sender.sendMessage(new TextComponent(String.format(plugin.getMessages().getString("not-found-in-redis"),
+                            serverId)));
                 }
                 return;
             }
@@ -60,7 +60,10 @@ public final class ServerSyncCommand {
                 List<String> delete = serverIds.stream().
                         filter(id -> gameServers.stream().noneMatch(gameServer -> gameServer.getName().equals(id)))
                         .collect(Collectors.toList());
-                delete.forEach(id -> serverInfoService.deleteOnProxy(id, false));
+                delete.forEach(id -> serverInfoService.deleteOnProxy(
+                        id,
+                        plugin.getConfiguration().getConfiguration().getBoolean("update-service.kick-on-delete-update"),
+                        plugin.getConfiguration().getConfiguration().getBoolean("update-service.require-empty-for-delete-update")));
                 List<String> synchronizedServers = new ArrayList<>();
                 gameServers.forEach(gameServer -> {
                     ServerInfo si;
@@ -68,18 +71,19 @@ public final class ServerSyncCommand {
                         if (gameServer.equals(si) && !delete.contains(gameServer.getName()))
                             return;
                     }
-                    serverInfoService.updateOnProxy(gameServer, false, false);
+                    serverInfoService.updateOnProxy(
+                            gameServer,
+                            plugin.getConfiguration().getConfiguration().getBoolean("update-service.kick-on-update"),
+                            plugin.getConfiguration().getConfiguration().getBoolean("update-service.require-empty-for-update"));
                     synchronizedServers.add(gameServer.getName());
                 });
                 CommandSender s = sender;
                 if (sender instanceof RedisBungeeCommandSender)
                     s = ProxyServer.getInstance().getConsole();
                 if (!synchronizedServers.isEmpty())
-                    s.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&aServers &e[%s] &ais synchronized",
-                                    String.join(", ", synchronizedServers)))));
-                else s.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                        "&aAll servers are already synchronized!")));
+                    s.sendMessage(new TextComponent(String.format(plugin.getMessages().getString("synchronized"),
+                            String.join(", ", synchronizedServers))));
+                else s.sendMessage(new TextComponent(plugin.getMessages().getString("already-synchronized")));
             });
         }
     }
@@ -98,18 +102,18 @@ public final class ServerSyncCommand {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
-            if (args.length == 5) {
+            if (args.length >= 5) {
                 String name = args[0];
                 String[] addr = args[1].split(":");
                 if (addr.length != 2) {
-                    sender.sendMessage(new TextComponent(ChatColor.RED + "Bad host!"));
+                    sender.sendMessage(new TextComponent(plugin.getMessages().getString("not-valid-host")));
                     return;
                 }
                 InetSocketAddress socketAddress;
                 try {
                     socketAddress = InetSocketAddress.createUnresolved(addr[0], Integer.parseInt(addr[1]));
                 } catch (NumberFormatException exception) {
-                    sender.sendMessage(new TextComponent(ChatColor.RED + "Bad port in host argument!"));
+                    sender.sendMessage(new TextComponent(plugin.getMessages().getString("not-valid-port")));
                     return;
                 }
                 String motd = args[2];
@@ -118,23 +122,30 @@ public final class ServerSyncCommand {
                 try {
                     serverType = ServerType.valueOf(args[4].toUpperCase());
                 } catch (IllegalArgumentException e) {
-                    sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&cBad server type! Server types is: &e[%s]",
+                    sender.sendMessage(new TextComponent(
+                            String.format(plugin.getMessages().getString("not-valid-server-type"),
                                     Arrays.stream(ServerType.values())
                                             .map(type -> type.name().toLowerCase())
-                                            .collect(Collectors.joining(", "))))));
+                                            .collect(Collectors.joining(", ")))));
                     return;
                 }
                 GameServer server = new GameServer(name, socketAddress, motd, restricted, serverType);
+                AtomicBoolean kick = new AtomicBoolean(false);
+                if (args.length >= 6)
+                    kick.set(Boolean.parseBoolean(args[5]));
+                AtomicBoolean requireEmpty = new AtomicBoolean(false);
+                if (args.length >= 7)
+                    requireEmpty.set(Boolean.parseBoolean(args[6]));
                 ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
                     serverInfoService.save(server);
-                    serverInfoService.updateOnProxy(server, false, true);
-                    sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&aServer &e%s&a successful added!", server.getName()))));
+                    serverInfoService.updateOnProxy(server, kick.get(), requireEmpty.get());
+                    sender.sendMessage(new TextComponent(String.format(
+                            plugin.getMessages().getString("server-added"),
+                            server.getName())));
                 });
                 return;
             }
-            sender.sendMessage(new TextComponent(ChatColor.RED + "Bad command args! Usage /badd <name> <host> <motd> <restricted> <serverType>"));
+            sender.sendMessage(new TextComponent(plugin.getMessages().getString("invalid-add-command")));
         }
     }
 
@@ -163,27 +174,45 @@ public final class ServerSyncCommand {
                 }
                 AtomicBoolean kick = new AtomicBoolean(false);
                 if (args.length >= 2)
-                    kick.set(true);
+                    kick.set(Boolean.parseBoolean(args[1]));
+                AtomicBoolean requireEmpty = new AtomicBoolean(false);
+                if (args.length >= 3)
+                    requireEmpty.set(Boolean.parseBoolean(args[2]));
                 ProxyServer.getInstance().getScheduler().runAsync(plugin, () -> {
                     serverInfoService.delete(server);
-                    serverInfoService.deleteOnProxy(server.getName(), kick.get());
-                    sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&aServer &e%s&a successful removed!", server.getName()))));
+                    sender.sendMessage(new TextComponent(String.format(
+                            plugin.getMessages().getString("server-removed"),
+                            name)));
+                    try {
+                        serverInfoService.deleteOnProxy(server.getName(), kick.get(), requireEmpty.get());
+                    } catch (GameServerNotFoundException e) {
+                        sender.sendMessage(new TextComponent(String.format(
+                                plugin.getMessages().getString("server-delete-exception"),
+                                name,
+                                e.getMessage())));
+                        return;
+                    }
+                    sender.sendMessage(new TextComponent(String.format(
+                            plugin.getMessages().getString("server-removed-on-proxy"),
+                            server.getName())));
                 });
                 return;
             }
-            sender.sendMessage(new TextComponent(ChatColor.RED + "Bad command args! Usage /bremove <name> ?<kick>"));
+            sender.sendMessage(new TextComponent(plugin.getMessages().getString("invalid-remove-command")));
         }
     }
 
     public static final class FallbackCommand extends Command {
 
         private final ServerInfoService serverInfoService;
+        private final BungeeServerSync plugin;
         private final RedisBungeeAPI redisBungeeAPI = RedisBungeeAPI.getRedisBungeeApi();
 
-        public FallbackCommand(ServerInfoService serverInfoService) {
+        public FallbackCommand(ServerInfoService serverInfoService,
+                               BungeeServerSync plugin) {
             super("bfallback", "bungeesync.fallback");
             this.serverInfoService = serverInfoService;
+            this.plugin = plugin;
         }
 
         @Override
@@ -200,14 +229,32 @@ public final class ServerSyncCommand {
                         redisBungeeAPI.sendProxyCommand(serverId, getName());
                         return;
                     }
-                    sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            String.format("&cServer with id %s not found in redis.", serverId))));
+                    sender.sendMessage(new TextComponent(String.format(
+                            plugin.getMessages().getString("not-fount-in-redis"),
+                            serverId)));
                 }
                 return;
             }
             serverInfoService.updateFallbackServers();
-            sender.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                    "&aList of fallback servers is updated!")));
+            sender.sendMessage(new TextComponent(String.format(
+                    plugin.getMessages().getString("fallback-updated"),
+                    String.join(", ", serverInfoService.getFallbackIds()))));
+        }
+    }
+
+    public static final class ReloadCommand extends Command {
+
+        private final BungeeServerSync plugin;
+
+        public ReloadCommand(BungeeServerSync plugin) {
+            super("breload", "bungeesync.reload");
+            this.plugin = plugin;
+        }
+
+        @Override
+        public void execute(CommandSender sender, String[] args) {
+            plugin.reloadConfiguration();
+            sender.sendMessage(new TextComponent(ChatColor.GREEN + "Plugin configuration successful reloaded!"));
         }
     }
 }
