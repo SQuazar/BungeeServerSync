@@ -32,6 +32,13 @@
 * Redis server - используется в RedisBungee
 * RedisBungee - плагин-инструмент для синхронизации данных между прокси-серверами
 
+# Installation
+
+* Устанавливаем [RedisBungee](https://github.com/ProxioDev/RedisBungee/wiki/Installation)
+* Подготавливаем MySQL сервер
+* Кидаем BungeeServerSync в папку плагинов и запускаем сервер
+* При необходимости останавливаем сервер и перенастраиваем конфигурацию базы данных
+
 # Build
 ```
 mvn clean package
