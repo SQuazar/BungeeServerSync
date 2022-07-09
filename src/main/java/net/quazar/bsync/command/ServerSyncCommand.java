@@ -41,8 +41,7 @@ public final class ServerSyncCommand {
         public void execute(CommandSender sender, String[] args) {
             if (args.length > 0) {
                 if ("all".equalsIgnoreCase(args[0])) {
-                    redisBungeeAPI.getAllServers().forEach(proxy ->
-                            redisBungeeAPI.sendProxyCommand(proxy, getName()));
+                    redisBungeeAPI.sendProxyCommand(getName());
                 } else {
                     String serverId = args[0];
                     if (redisBungeeAPI.getAllServers().contains(serverId)) {
@@ -220,10 +219,8 @@ public final class ServerSyncCommand {
             if (sender instanceof RedisBungeeCommandSender)
                 sender = ProxyServer.getInstance().getConsole();
             if (args.length > 0) {
-                if ("all".equalsIgnoreCase(args[0])) {
-                    redisBungeeAPI.getAllServers().forEach(proxy ->
-                            redisBungeeAPI.sendProxyCommand(proxy, getName()));
-                } else {
+                if ("all".equalsIgnoreCase(args[0])) redisBungeeAPI.sendProxyCommand(getName());
+                else {
                     String serverId = args[0];
                     if (redisBungeeAPI.getAllServers().contains(serverId)) {
                         redisBungeeAPI.sendProxyCommand(serverId, getName());
