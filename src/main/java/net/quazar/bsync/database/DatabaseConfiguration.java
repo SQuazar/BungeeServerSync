@@ -1,8 +1,8 @@
-package net.quazar.mg.database;
+package net.quazar.bsync.database;
 
 import lombok.Data;
 import net.md_5.bungee.config.Configuration;
-import net.quazar.mg.PluginConfiguration;
+import net.quazar.bsync.config.PluginConfiguration;
 
 @Data
 public final class DatabaseConfiguration {

@@ -1,4 +1,4 @@
-package net.quazar.mg;
+package net.quazar.bsync.config;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +28,14 @@ public class PluginConfiguration {
                 ConfigurationProvider.getProvider(YamlConfiguration.class).save(configuration, configFile);
             }
         } else configuration = ConfigurationProvider.getProvider(YamlConfiguration.class).load(configFile);
+    }
+
+    public void reload() {
+        try {
+            makeConfig();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

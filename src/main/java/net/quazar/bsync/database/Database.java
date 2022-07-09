@@ -1,4 +1,4 @@
-package net.quazar.mg.database;
+package net.quazar.bsync.database;
 
 import java.sql.Connection;
 import java.sql.SQLException;

@@ -1,9 +1,9 @@
-package net.quazar.mg.mapper.impl;
+package net.quazar.bsync.mapper.impl;
 
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
-import net.quazar.mg.mapper.ObjectMapper;
-import net.quazar.mg.model.GameServer;
+import net.quazar.bsync.mapper.ObjectMapper;
+import net.quazar.bsync.model.GameServer;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

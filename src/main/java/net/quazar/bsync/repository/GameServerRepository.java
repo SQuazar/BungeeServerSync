@@ -1,6 +1,6 @@
-package net.quazar.mg.repository;
+package net.quazar.bsync.repository;
 
-import net.quazar.mg.model.GameServer;
+import net.quazar.bsync.model.GameServer;
 
 public interface GameServerRepository extends Repository<GameServer, String> {
 }

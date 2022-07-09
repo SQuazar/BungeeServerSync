@@ -1,4 +1,4 @@
-package net.quazar.mg.exception;
+package net.quazar.bsync.exception;
 
 public class GameServerNotFoundException extends ServerInfoException {
     public GameServerNotFoundException(String message) {

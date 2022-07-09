@@ -1,4 +1,4 @@
-package net.quazar.mg.database;
+package net.quazar.bsync.database;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;

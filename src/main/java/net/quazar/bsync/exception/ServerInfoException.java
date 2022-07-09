@@ -1,4 +1,4 @@
-package net.quazar.mg.exception;
+package net.quazar.bsync.exception;
 
 public class ServerInfoException extends RuntimeException {
 

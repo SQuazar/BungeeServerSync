@@ -1,13 +1,13 @@
-package net.quazar.mg.repository.impl;
+package net.quazar.bsync.repository.impl;
 
 import lombok.AllArgsConstructor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.config.ServerInfo;
-import net.quazar.mg.database.Database;
-import net.quazar.mg.database.Sql;
-import net.quazar.mg.model.GameServer;
-import net.quazar.mg.model.ServerType;
-import net.quazar.mg.repository.GameServerRepository;
+import net.quazar.bsync.database.Database;
+import net.quazar.bsync.database.Sql;
+import net.quazar.bsync.model.GameServer;
+import net.quazar.bsync.model.ServerType;
+import net.quazar.bsync.repository.GameServerRepository;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.InetSocketAddress;

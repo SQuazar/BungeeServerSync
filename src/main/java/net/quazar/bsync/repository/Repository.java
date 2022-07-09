@@ -1,4 +1,4 @@
-package net.quazar.mg.repository;
+package net.quazar.bsync.repository;
 
 import org.jetbrains.annotations.NotNull;
 
