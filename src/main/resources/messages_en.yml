@@ -1,0 +1,33 @@
+# Command layer
+not-found-in-redis: "&cServer with id %s is not found in Redis."
+synchronized: "&aServers &e[%s]&a is synchronized!"
+already-synchronized: "&aAll servers is already synchronized!"
+
+not-valid-host: "&cInvalid argument host!"
+not-valid-port: "&cInvalid port in argument host!"
+not-valid-server-type: "&cInvalid server type! Server types: &e[%s]"
+
+server-added: "&aServer &e%s&a successful added!"
+
+server-removed: "&aServer &e%s&a is deleted from database!"
+server-removed-on-proxy: "&aServer &e%s&a is deleted from this proxy server!"
+server-delete-exception: "&cCannot delete server &e%s&c on this proxy server! Reason: \"%s\""
+
+fallback-updated: "&aList of fallback servers is updated! New list of fallback servers: &e%s"
+
+invalid-add-command: "&cInvalid command usage! Usage: /badd <name> <host> <motd> <restricted> <serverType> ?<kick> ?<requireEmpty>"
+invalid-remove-command: "&cInvalid command usage! Usage: /bremove <name> ?<kick>"
+
+# Exception on service layer
+server-not-found: "&cServer with id %s is not found in database!"
+
+# When player is kicked or connected to fallback server
+reason-server-deleted: "&cServer %s is deleted."
+reason-server-updated: "&cServer %s is updated on proxy server."
+
+# When player is reconnected to server
+reconnect-message: "&aYour connection is restored!"
+
+# When server is updated and players are not kicked
+notify-server-updated: "&cThis server is updated on proxy server. Please&e reconnect&c to avoid losing data!"
+

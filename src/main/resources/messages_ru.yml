@@ -1,0 +1,33 @@
+# Command layer
+not-found-in-redis: "&cСервер %s не найден в Redis."
+synchronized: "&aСервера &e[%s]&a были синхронизированы!"
+already-synchronized: "&aВсе сервера уже синхронизированы!"
+
+not-valid-host: "&cНеверный формат аргумента host!"
+not-valid-port: "&cНеверный порт в аргументе host!"
+not-valid-server-type: "&cНеверный тип сервера! Доступные типы серверов: &e[%s]"
+
+server-added: "&aСервер &e%s&a успешно добавлен!"
+
+server-removed: "&aСервер &e%s&a был удалён из базы данных!"
+server-removed-on-proxy: "&aСервер &e%s&a был удалён с этого прокси-сервера!"
+server-delete-exception: "&cНе удалось удалить сервер &e%s&c на прокси-сервере! Причина: \"%s\""
+
+fallback-updated: "&aСписок fallback серверов был обновлён! Текущий список fallback серверов: &e%s"
+
+invalid-add-command: "&cНеверное использование команды! Пример: /badd <name> <host> <motd> <restricted> <serverType> ?<kick> ?<requireEmpty>"
+invalid-remove-command: "&cНеверное использование команды! Пример: /bremove <name> ?<kick>"
+
+# Exception on service layer
+server-not-found: "&cСервер %s не найден в базе данных!"
+
+# When player is kicked or connected to fallback server
+reason-server-deleted: "&cСервер %s был удалён."
+reason-server-updated: "&cСервер %s был обновлён на прокси-сервере."
+
+# When player is reconnected to server
+reconnect-message: "&aМы восстановили ваше подключение на данном сервере. Можете продолжать играть!"
+
+# When server is updated and players are not kicked
+notify-server-updated: "&cДанный сервер был обновлён на прокси-сервере. Пожалуйста,&e перезайдите&c, чтобы избежать потери данных!"
+
