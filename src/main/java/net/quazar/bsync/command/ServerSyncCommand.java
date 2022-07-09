@@ -242,6 +242,7 @@ public final class ServerSyncCommand {
     public static final class ReloadCommand extends Command {
 
         private final BungeeServerSync plugin;
+        private final RedisBungeeAPI redisBungeeAPI = RedisBungeeAPI.getRedisBungeeApi();
 
         public ReloadCommand(BungeeServerSync plugin) {
             super("breload", "bungeesync.reload");
@@ -250,6 +251,16 @@ public final class ServerSyncCommand {
 
         @Override
         public void execute(CommandSender sender, String[] args) {
+            if (args.length >= 1) {
+                if (args[0].equalsIgnoreCase("all"))
+                    redisBungeeAPI.sendProxyCommand("breload");
+                else
+                    if (redisBungeeAPI.getAllServers().contains(args[0]))
+                        redisBungeeAPI.sendProxyCommand(args[0], "breload");
+                    else
+                        sender.sendMessage(new TextComponent(String.format(plugin.getMessages().getString("not-found-in-redis"),
+                                args[0])));
+            }
             plugin.reloadConfiguration();
             sender.sendMessage(new TextComponent(ChatColor.GREEN + "Plugin configuration successful reloaded!"));
         }
