@@ -1,4 +1,4 @@
-package net.quazar.mg.model;
+package net.quazar.bsync.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
