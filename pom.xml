@@ -4,17 +4,29 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>net.quazar.mg</groupId>
+    <groupId>net.quazar.bsync</groupId>
     <artifactId>BungeeServerSync</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>BungeeServerSync</name>
-
     <description>BungeeCord server sync</description>
+
+    <developers>
+        <developer>
+            <name>quazar</name>
+            <url>https://t.me/squazar</url>
+            <roles>
+                <role>owner</role>
+            </roles>
+            <timezone>GMT+3</timezone>
+        </developer>
+    </developers>
+
     <properties>
         <java.version>1.8</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <hikari.version>4.0.3</hikari.version>
     </properties>
 
     <build>
@@ -40,7 +52,27 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <filters>
+                                <filter>
+                                    <artifact>com.zaxxer:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>org.slf4j:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.MF</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
                             <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <relocations>
+                                <relocation>
+                                    <pattern>com.zaxxer</pattern>
+                                    <shadedPattern>net.quazar.bsync.shaded</shadedPattern>
+                                </relocation>
+                            </relocations>
                         </configuration>
                     </execution>
                 </executions>
@@ -91,7 +123,7 @@
         <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
-            <version>4.0.3</version>
+            <version>${hikari.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
