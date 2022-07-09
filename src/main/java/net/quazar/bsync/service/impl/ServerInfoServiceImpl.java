@@ -1,22 +1,21 @@
-package net.quazar.mg.service.impl;
+package net.quazar.bsync.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.ProxyServer;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.config.ListenerInfo;
 import net.md_5.bungee.api.config.ServerInfo;
 import net.md_5.bungee.api.connection.ProxiedPlayer;
 import net.md_5.bungee.api.event.ServerConnectEvent;
-import net.quazar.mg.BungeeServerSync;
-import net.quazar.mg.exception.GameServerNotFoundException;
-import net.quazar.mg.exception.ServerInfoException;
-import net.quazar.mg.mapper.ObjectMapper;
-import net.quazar.mg.model.GameServer;
-import net.quazar.mg.model.ServerType;
-import net.quazar.mg.repository.GameServerRepository;
-import net.quazar.mg.scheduler.EmptyServerInfoTask;
-import net.quazar.mg.service.ServerInfoService;
+import net.quazar.bsync.BungeeServerSync;
+import net.quazar.bsync.exception.GameServerNotFoundException;
+import net.quazar.bsync.exception.ServerInfoException;
+import net.quazar.bsync.model.GameServer;
+import net.quazar.bsync.model.ServerType;
+import net.quazar.bsync.repository.GameServerRepository;
+import net.quazar.bsync.scheduler.DeleteEmptyGameServerTask;
+import net.quazar.bsync.scheduler.UpdateEmptyGameServerTask;
+import net.quazar.bsync.service.ServerInfoService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -29,14 +28,13 @@ import java.util.stream.Collectors;
 public class ServerInfoServiceImpl implements ServerInfoService {
 
     private final GameServerRepository repository;
-    private final ObjectMapper<ServerInfo, GameServer> serverMapper;
     private final BungeeServerSync plugin;
     private List<ServerInfo> fallback;
 
     @Override
     public @NotNull GameServer get(@NotNull String name) throws GameServerNotFoundException {
         return repository.findByKey(name).orElseThrow(() -> new GameServerNotFoundException(String.format(
-                ChatColor.RED + "Server with name %s not found!",
+                plugin.getMessages().getString("server-not-found"),
                 name
         )));
     }
@@ -65,19 +63,24 @@ public class ServerInfoServiceImpl implements ServerInfoService {
     }
 
     @Override
-    public void deleteOnProxy(@NotNull String name, boolean kick) {
+    public void deleteOnProxy(@NotNull String name, boolean kick, boolean requireEmpty) throws GameServerNotFoundException {
         ServerInfo serverInfo = ProxyServer.getInstance().getServerInfo(name);
         if (serverInfo == null)
-            throw new GameServerNotFoundException(String.format(ChatColor.RED + "Server with name %s not found!",
+            throw new GameServerNotFoundException(String.format(
+                    plugin.getMessages().getString("server-not-found"),
                     name));
         if (kick)
-            fallback(serverInfo.getPlayers(), String.format("&cСервер %s был удалён.", serverInfo.getName()));
+            fallback(serverInfo.getPlayers(), String.format(
+                    plugin.getMessages().getString("server-deleted"),
+                    serverInfo.getName()));
+        if (requireEmpty)
+            new DeleteEmptyGameServerTask(plugin, serverInfo);
         else {
-            ProxyServer.getInstance().getServers().remove(serverInfo.getName());
-            serverInfo.getPlayers().forEach(proxiedPlayer ->
-                    proxiedPlayer.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                            "&cДанный сервер был обновлён на прокси-сервере. " +
-                                    "Пожалуйста,&e перезайдите&c, чтобы избежать потери данных!"))));
+//            ProxyServer.getInstance().getServers().remove(serverInfo.getName());
+            ProxyServer.getInstance().getConfig().removeServer(serverInfo);
+            if (!kick)
+                serverInfo.getPlayers().forEach(proxiedPlayer ->
+                        proxiedPlayer.sendMessage(new TextComponent(plugin.getMessages().getString("notify-server-updated"))));
         }
         plugin.getLogger().info(String.format("Server %s is deleted from proxy", name));
     }
@@ -88,22 +91,23 @@ public class ServerInfoServiceImpl implements ServerInfoService {
         if ((si = ProxyServer.getInstance().getServerInfo(gameServer.getName())) != null) {
             Collection<ProxiedPlayer> players = si.getPlayers();
             if (kick)
-                fallback(players, String.format("&cСервер %s был обновлён на прокси-сервере.", si.getName()));
+                fallback(players, String.format(plugin.getMessages().getString("reason-server-updated"), si.getName()));
             if (requireEmptyServer)
-                new EmptyServerInfoTask(plugin, si, gameServer).run();
+                new UpdateEmptyGameServerTask(plugin, si, gameServer).run();
             else {
-                ProxyServer.getInstance().getServers().put(gameServer.getName(), gameServer.getServerInfo());
+//                ProxyServer.getInstance().getServers().put(gameServer.getName(), gameServer.getServerInfo());
+                ProxyServer.getInstance().getConfig().addServer(gameServer.getServerInfo());
                 plugin.getLogger().info(String.format("Server %s is synchronized on proxy", gameServer.getName()));
                 if (!kick)
                     players.forEach(proxiedPlayer ->
-                            proxiedPlayer.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&',
-                                    "&cДанный сервер был обновлён на прокси-сервере. " +
-                                            "Пожалуйста,&e перезайдите&c, чтобы избежать потери данных!"))));
-                else reconnect(gameServer.getServerInfo(), players, null);
+                            proxiedPlayer.sendMessage(new TextComponent(plugin.getMessages().getString("notify-server-updated"))));
+                else
+                    reconnect(gameServer.getServerInfo(), players, plugin.getMessages().getString("reconnect-message"));
             }
             return;
         }
-        ProxyServer.getInstance().getServers().put(gameServer.getName(), gameServer.getServerInfo());
+//        ProxyServer.getInstance().getServers().put(gameServer.getName(), gameServer.getServerInfo());
+        ProxyServer.getInstance().getConfig().addServer(gameServer.getServerInfo());
         plugin.getLogger().info(String.format("Server %s is synchronized on proxy", gameServer.getName()));
     }
 
@@ -112,10 +116,17 @@ public class ServerInfoServiceImpl implements ServerInfoService {
         resolveFallbackServers(true);
     }
 
+    @Override
+    public List<String> getFallbackIds() {
+        return resolveFallbackServers(false).stream()
+                .map(ServerInfo::getName)
+                .collect(Collectors.toList());
+    }
+
     private synchronized void fallback(Collection<ProxiedPlayer> players, String reason) {
         players.forEach(proxiedPlayer -> {
             proxiedPlayer.connect(resolveFallbackServer(resolveFallbackServers(false)));
-            proxiedPlayer.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&', reason)));
+            proxiedPlayer.sendMessage(new TextComponent(reason));
         });
     }
 
@@ -124,7 +135,7 @@ public class ServerInfoServiceImpl implements ServerInfoService {
             if (server.canAccess(proxiedPlayer)) {
                 proxiedPlayer.connect(server, ServerConnectEvent.Reason.PLUGIN);
                 if (reason != null)
-                    proxiedPlayer.sendMessage(new TextComponent(ChatColor.translateAlternateColorCodes('&', reason)));
+                    proxiedPlayer.sendMessage(new TextComponent(reason));
             }
         }), 1L, TimeUnit.SECONDS);
     }
@@ -136,7 +147,7 @@ public class ServerInfoServiceImpl implements ServerInfoService {
         } catch (ServerInfoException e) {
             List<ServerInfo> fallback = findAll().stream()
                     .filter(gameServer -> !gameServer.isRestricted()
-                            && gameServer.getServerType() == ServerType.FALLBACK)
+                            && gameServer.getServerType() == ServerType.HUB)
                     .map(gameServer -> ProxyServer.getInstance().getServerInfo(gameServer.getName()))
                     .collect(Collectors.toList());
             if (fallback.isEmpty()) {
