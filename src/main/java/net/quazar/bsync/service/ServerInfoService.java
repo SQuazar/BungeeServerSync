@@ -1,7 +1,7 @@
-package net.quazar.mg.service;
+package net.quazar.bsync.service;
 
-import net.quazar.mg.exception.GameServerNotFoundException;
-import net.quazar.mg.model.GameServer;
+import net.quazar.bsync.exception.GameServerNotFoundException;
+import net.quazar.bsync.model.GameServer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -47,8 +47,9 @@ public interface ServerInfoService {
      * Удаляет сервер на прокси-сервере
      * @param name имя сервера
      * @param kick нужно ли выкидывать игроков с сервера
+     * @param requireEmpty дожидаться ли "опустошения" сервера
      */
-    void deleteOnProxy(@NotNull String name, boolean kick);
+    void deleteOnProxy(@NotNull String name, boolean kick, boolean requireEmpty) throws GameServerNotFoundException;
 
     /**
      * Обновляет информацию о сервере непосредственно на прокси-сервере
@@ -62,5 +63,7 @@ public interface ServerInfoService {
      * Обновляет Fallback сервера на прокси-сервере
      */
     void updateFallbackServers();
+
+    List<String> getFallbackIds();
 
 }
