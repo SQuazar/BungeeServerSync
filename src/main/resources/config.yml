@@ -1,6 +1,31 @@
+# Plugin database configuration
 database:
   host: '127.0.0.1'
   port: 3306
   db: 'main'
   user: 'root'
   password: 'root'
+
+# Plugin messages localization configuration
+# Define localization file.
+# Example file in config folder: messages_en.yml
+# If localized messages are not found in config folder then plugin throw exception
+# Default localized messages is: ru, en
+messages-locale: "ru"
+
+# Update service configuration
+# Using for setting of update command
+update-service:
+  # Kick players when server is updated
+  kick-on-update: false
+  # Kick players when server is deleted by update action
+  kick-on-delete-update: false
+  # Require empty server when server is updated
+  require-empty-for-update: false
+  # Require empty server when server is deleted by update action
+  require-empty-for-delete-update: false
+  # Scheduled server synchronization
+  # Every n seconds the servers will sync
+  # Set -1 for disable this
+  # Default: 300 seconds (5 minutes)
+  scheduled-update: 300
