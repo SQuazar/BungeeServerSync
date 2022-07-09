@@ -16,7 +16,7 @@
 | /badd      | /badd \<name> \<host> \<motd> \<restricted> \<type> ?\<kick> ?\<requireEmpty> | Добавляет игровой сервер в базу данных и на текущий прокси-сервер. type - тип сервера                                                             | bungeesync.add      | none  |
 | /bremove   | /brm \<name> ?\<kick> ?\<requireEmpty>                                        | Удаляет игровой сервер из базы данных и текущего прокси-сервера                                                                                   | bungeesync.remove   | brm   |
 | /bfallback | /bfallback \<bungeeId/all>                                                    | Обновляет список fallback серверов на прокси-сервере(-ах). При отсутствии аргументов обновляет список fallback серверов на текущем прокси-сервере | bungeesync.fallback | none  |
-| /breload   | /breload                                                                      | Перезагружает файлы конфигурации плагина                                                                                                          | bungeesync.reload   | none  |
+| /breload   | /breload \<bungeeId/all>                                                      | Перезагружает файлы конфигурации плагина на прокси-сервере(-ах). При отсутствии аргументов обновляет конфигурацию на текущем прокси-сервере       | bungeesync.reload   | none  |
 
 # Server types
 
