@@ -1,4 +1,4 @@
-package net.quazar.mg.mapper;
+package net.quazar.bsync.mapper;
 
 public interface ObjectMapper<S, T> {
 
